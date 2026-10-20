@@ -1,0 +1,56 @@
+name: Set lineup
+
+on:
+  schedule:
+    # Every run sets today plus the next 4 days, so running several times a
+    # day is harmless and later runs pick up fresh injury news.
+    # Asked for hours EARLY on purpose: GitHub has been delivering this
+    # account's scheduled runs four to five hours late. Minutes avoid :00,
+    # the most contended slot. Times are UTC (Eastern + 4 or 5).
+    - cron: "13 5 * * *"
+    - cron: "7 7 * * *"
+    - cron: "19 13 * * *"
+    - cron: "41 17 * * *"
+    - cron: "23 21 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only - don't save anything"
+        type: boolean
+        default: false
+      days:
+        description: "How many days to set, starting today"
+        default: "5"
+
+permissions:
+  contents: read
+  actions: write   # for the keep-alive step below
+
+concurrency:
+  group: lineup
+  cancel-in-progress: false
+
+jobs:
+  set-lineup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set lineup
+        env:
+          YAHOO_CLIENT_ID: ${{ secrets.YAHOO_CLIENT_ID }}
+          YAHOO_CLIENT_SECRET: ${{ secrets.YAHOO_CLIENT_SECRET }}
+          YAHOO_REFRESH_TOKEN: ${{ secrets.YAHOO_REFRESH_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          DAYS: ${{ inputs.days || '5' }}
+        run: python lineup.py
+      # GitHub switches off scheduled workflows in a repo with no commits for
+      # 60 days. This repo never commits on its own, so re-enable every run.
+      - name: Keep schedule alive
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/lineup.yml/enable"
