@@ -18,7 +18,11 @@ Agreed 2026-10-20.
    can take G). This beats every other rule.
 
 2. **Out / Injured / Not Active never start.** Move them to IL if an IL slot
-   is free.
+   is free (Yahoo only allows IL for Out / Injured, not Not Active).
+   **Coming back:** when an IL player is healthy again, move him to the bench
+   if a bench spot is free; he is then a normal candidate to start that day.
+   If no bench spot is free, a drop is needed — leave it and alert Kyle; the
+   bot never drops anyone.
 
 3. **Score each player**, then start the lowest scores. For each factor, rank
    your own players 1 to N (1 = best on the team), then take the weighted
